@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- Важные мета-теги для iPhone -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Мой Музыкальный Плеер</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background: #f0f0f0;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .track {
+            background: white;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+        audio {
+            width: 100%;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Моя Музыка</h1>
+    <div id="playlist"></div>
+
+    <script>
+        // Ваш плейлист (замените ссылки на свои)
+        const playlist = [
+            {
+                title: "Трек 1",
+                url: "https://drive.google.com/uc?export=download&id=ВАШ_ID_ТРЕКА_1"
+            },
+            {
+                title: "Трек 2",
+                url: "https://drive.google.com/uc?export=download&id=ВАШ_ID_ТРЕКА_2"
+            }
+        ];
+
+        // Создаем аудиоплеер
+        const player = document.createElement('audio');
+        player.controls = true;
+        player.style.marginTop = '20px';
+
+        // Показываем плейлист
+        const playlistDiv = document.getElementById('playlist');
+        playlistDiv.appendChild(player);
+
+        playlist.forEach(track => {
+            const trackElement = document.createElement('div');
+            trackElement.className = 'track';
+            trackElement.textContent = track.title;
+            trackElement.onclick = () => {
+                player.src = track.url;
+                player.play();
+            };
+            playlistDiv.appendChild(trackElement);
+        });
+    </script>
+</body>
+</html>
