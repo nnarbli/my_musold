@@ -1,74 +1,210 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <!-- Важные мета-теги для iPhone -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Мой Музыкальный Плеер</title>
+    <title>Персональный Плеер</title>
     <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: Arial, sans-serif;
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 15px;
-            background: #f0f0f0;
+            padding: 0;
         }
-        h1 {
-            text-align: center;
-            color: #333;
+
+        body {
+            font-family: 'Segoe UI', system-ui;
+            background: #f8f9fa;
+            color: var(--primary);
         }
-        .track {
+
+        /* Шапка плеера */
+        .player-header {
             background: white;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            cursor: pointer;
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
-        audio {
+
+        /* Блок альбомов */
+        .albums-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1.5rem;
+            padding: 1rem;
+        }
+
+        .album-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .album-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .album-cover {
             width: 100%;
-            margin: 20px 0;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .album-info {
+            padding: 12px;
+        }
+
+        /* Окно плеера */
+        .player-wrapper {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 -2px 15px rgba(0,0,0,0.1);
+            padding: 1rem;
+        }
+
+        /* Элементы управления */
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:active {
+            opacity: 0.8;
+        }
+
+        /* Адаптив для iPhone */
+        @media (max-width: 600px) {
+            .albums-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+            
+            .album-cover {
+                height: 150px;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Моя Музыка</h1>
-    <div id="playlist"></div>
+    <div class="player-header">
+        <h1>Моя Музыка</h1>
+    </div>
+
+    <div class="albums-grid" id="albumsContainer"></div>
+
+    <div class="player-wrapper">
+        <audio id="mainAudio" controls></audio>
+        <div class="controls">
+            <button onclick="skip(-10)">-10s</button>
+            <button onclick="playPause()">▶</button>
+            <button onclick="skip(10)">+10s</button>
+        </div>
+    </div>
 
     <script>
-        // Ваш плейлист (замените ссылки на свои)
-        const playlist = [
-            {
-                title: "Трек 1",
-                url: "https://drive.google.com/uc?export=download&id=ВАШ_ID_ТРЕКА_1"
-            },
-            {
-                title: "Трек 2",
-                url: "https://drive.google.com/uc?export=download&id=ВАШ_ID_ТРЕКА_2"
-            }
-        ];
+        // Данные альбомов (замените на свои)
+        const library = [/* Вставьте структуру из предыдущего блока */];
 
-        // Создаем аудиоплеер
-        const player = document.createElement('audio');
-        player.controls = true;
-        player.style.marginTop = '20px';
+        const audioElement = document.getElementById('mainAudio');
+        let currentTrack = null;
 
-        // Показываем плейлист
-        const playlistDiv = document.getElementById('playlist');
-        playlistDiv.appendChild(player);
+        // Рендер альбомов
+        function renderAlbums() {
+            const container = document.getElementById('albumsContainer');
+            
+            library.forEach(album => {
+                const card = document.createElement('div');
+                card.className = 'album-card';
+                card.innerHTML = `
+                    <img src="${album.cover}" class="album-cover" alt="${album.album}">
+                    <div class="album-info">
+                        <h3>${album.album}</h3>
+                        <p>${album.year} • ${album.tracks.length} треков</p>
+                    </div>
+                `;
 
-        playlist.forEach(track => {
-            const trackElement = document.createElement('div');
-            trackElement.className = 'track';
-            trackElement.textContent = track.title;
-            trackElement.onclick = () => {
-                player.src = track.url;
-                player.play();
-            };
-            playlistDiv.appendChild(trackElement);
-        });
+                card.addEventListener('click', () => showTracks(album));
+                container.appendChild(card);
+            });
+        }
+
+        // Показать треки альбома
+        function showTracks(album) {
+            const modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.right = '0';
+            modal.style.bottom = '0';
+            modal.style.background = 'rgba(0,0,0,0.9)';
+            modal.style.padding = '1rem';
+            modal.style.overflowY = 'auto';
+            
+            modal.innerHTML = `
+                <div style="max-width: 600px; margin: 0 auto;">
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            style="background: none; color: white; margin-bottom: 1rem">
+                        ← Назад
+                    </button>
+                    
+                    <h2 style="color: white">${album.album}</h2>
+                    
+                    $${album.tracks.map((track, index) => `
+                        <div onclick="playTrack('$${track.url}', ${index})" 
+                             style="padding: 1rem; background: rgba(255,255,255,0.1); 
+                                    margin: 0.5rem 0; border-radius: 8px;
+                                    ${currentTrack?.url === track.url ? 'border: 2px solid var(--secondary)' : ''}">
+                            <b>${index + 1}.</b> ${track.title}
+                            <span style="float: right">${track.duration}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        // Управление воспроизведением
+        function playTrack(url, trackIndex) {
+            currentTrack = library.flatMap(a => a.tracks)[trackIndex];
+            audioElement.src = url;
+            audioElement.play();
+        }
+
+        function playPause() {
+            audioElement.paused ? audioElement.play() : audioElement.pause();
+        }
+
+        function skip(seconds) {
+            audioElement.currentTime += seconds;
+        }
+
+        // Инициализация
+        renderAlbums();
     </script>
 </body>
 </html>
